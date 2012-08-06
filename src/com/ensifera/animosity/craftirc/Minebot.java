@@ -93,7 +93,7 @@ public class Minebot extends PircBot implements Runnable {
             this.setAutoNickChange(true);
             
             String localAddr = this.plugin.cBindLocalAddr();
-            if (!localAddr.isEmpty()) {
+            if (localAddr.length() != 0) {
                 
                 if (this.bindLocalAddr(localAddr, this.ircPort)) {
                     CraftIRC.log.info(CraftIRC.NAME + " - BINDING socket to " + localAddr + ":" + this.ircPort);
@@ -142,7 +142,7 @@ public class Minebot extends PircBot implements Runnable {
     }
     
     void authenticateBot() {
-        if (this.authMethod.equalsIgnoreCase("nickserv") && !authPass.isEmpty()) {
+        if (this.authMethod.equalsIgnoreCase("nickserv") && authPass.length() != 0) {
             CraftIRC.log.info(CraftIRC.NAME + " - Using Nickserv authentication.");
             this.sendMessage("nickserv", "GHOST " + this.nickname + " " + this.authPass);
 

@@ -3,14 +3,19 @@ package com.ensifera.animosity.craftirc;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.milkbowl.vault.chat.Chat;
-import net.minecraft.server.MinecraftServer;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Server;
@@ -46,7 +51,7 @@ public class CraftIRC extends JavaPlugin {
     //Misc class attributes
     PluginDescriptionFile desc = null;
     public Server server = null;
-    private MinecraftServer console;
+//    private MinecraftServer console;
     private final CraftIRCListener listener = new CraftIRCListener(this);
     private ArrayList<Minebot> instances;
     private boolean debug;
@@ -72,7 +77,7 @@ public class CraftIRC extends JavaPlugin {
            
             Field cfield = CraftServer.class.getDeclaredField("console");
             cfield.setAccessible(true);
-            console = (MinecraftServer) cfield.get((CraftServer)getServer());
+//            console = (MinecraftServer) cfield.get((CraftServer)getServer());
             
             bots = new ArrayList<ConfigurationNode>(configuration.getNodeList("bots", null));
             colormap = new ArrayList<ConfigurationNode>(configuration.getNodeList("colormap", null));
@@ -785,13 +790,13 @@ public class CraftIRC extends JavaPlugin {
     }
    
     protected void enqueueConsoleCommand(String cmd) {
-      try {
-        console.issueCommand(cmd, console);
-
-      } catch (Exception e) {
-          e.printStackTrace();
-      }
-    
+//      try {
+//        console.issueCommand(cmd, console);
+//
+//      } catch (Exception e) {
+//          e.printStackTrace();
+//      }
+//    
        
     }
  
