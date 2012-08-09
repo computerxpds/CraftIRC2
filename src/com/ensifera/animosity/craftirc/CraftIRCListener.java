@@ -30,9 +30,11 @@ public class CraftIRCListener implements Listener {
         }
     } 
     
-    @EventHandler(priority=EventPriority.MONITOR)
+    @EventHandler(priority=EventPriority.NORMAL)
     public void onPlayerChat(AsyncPlayerChatEvent event) {
-       
+    	if( this.plugin.isDebug() )
+    		CraftIRC.log.info("AsyncPlayerChatEvent received, msg="+event.getMessage());
+    	
         if (this.plugin.isHeld(CraftIRC.HoldType.CHAT)) {
             return;
             
