@@ -13,7 +13,8 @@ enum EndPoint {
 
 public class RelayedMessage {
     
-    private CraftIRC plugin;
+    private final CraftIRC plugin;
+    private final Debug debug;
     private EndPoint source;        //Origin endpoint of the message
     private EndPoint target;        //Target endpoint of the message
     public String formatting;       //Formatting string ID; Mandatory before toString
@@ -29,6 +30,7 @@ public class RelayedMessage {
     
     protected RelayedMessage(CraftIRC plugin, EndPoint source, EndPoint target) {
         this.plugin = plugin;
+        this.debug = plugin.getDebugger();
         formatting = null;
         setSource(source);
         setTarget(target);
@@ -78,10 +80,14 @@ public class RelayedMessage {
         int formattingBot = trgBot;
         String formattingChannel = trgChannel;
  
-        if (source == EndPoint.PLUGIN || target == EndPoint.PLUGIN || target == EndPoint.UNKNOWN) 
+        if (source == EndPoint.PLUGIN || target == EndPoint.PLUGIN || target == EndPoint.UNKNOWN) {
+        	debug.debug("RelayedMessage.asString(): first if");
             result = this.message;
+        }
         if (source == EndPoint.GAME && target == EndPoint.IRC) {
+        	debug.debug("RelayedMessage.asString(): second if");
             if(this.plugin.cGameChatColors(trgBot, trgChannel)) {
+            	debug.debug("RelayedMessage.asString(): second if, cGameChatColors sub-if");
                 Pattern color_codes = Pattern.compile("\u00A7([A-Za-z0-9])?");
                 Matcher find_colors = color_codes.matcher(msgout);
                 while (find_colors.find()) {
@@ -92,12 +98,16 @@ public class RelayedMessage {
             else
                 msgout = msgout.replaceAll("(\u00A7([A-Za-z0-9])?)", "");
             
+        	debug.debug("RelayedMessage.asString(): second if, msgout=",msgout);
             result = this.plugin.cFormatting("game-to-irc." + formatting, trgBot, trgChannel);
         }
         
-        if (source == EndPoint.IRC && (target == EndPoint.IRC || target == EndPoint.BOTH && realTarget == EndPoint.IRC))
+        if (source == EndPoint.IRC && (target == EndPoint.IRC || target == EndPoint.BOTH && realTarget == EndPoint.IRC)) {
+        	debug.debug("RelayedMessage.asString(): third if");
             result = this.plugin.cFormatting("irc-to-irc." + formatting, trgBot, trgChannel);
+        }
         if (source == EndPoint.IRC && (target == EndPoint.GAME || target == EndPoint.BOTH && realTarget == EndPoint.GAME)) {
+        	debug.debug("RelayedMessage.asString(): fourth if");
             //Colors in chat
             if (this.plugin.cChanChatColors(srcBot, srcChannel)) {
                 msgout = msgout.replaceAll("(" + Character.toString((char) 2) + "|" + Character.toString((char) 22)
@@ -120,7 +130,9 @@ public class RelayedMessage {
             formattingChannel = srcChannel;
             result = this.plugin.cFormatting("irc-to-game." + formatting, srcBot, srcChannel);
         }
+
         if (result == null) throw new RelayedMessageException(this);
+        
         result = result.replaceAll("%k([0-9]{1,2})%", Character.toString((char) 3) + "$1");
         result = result.replaceAll("%k([0-9]{1,2}),([0-9]{1,2})%", Character.toString((char) 3) + "$1,$2");
         result = result.replace("%k%", Character.toString((char) 3));
@@ -166,5 +178,21 @@ public class RelayedMessage {
             find_vars = other_vars.matcher(result);
         }
         return result;
+    }
+    
+    public String toString() {
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("RelayedMessage:{");
+    	
+    	sb.append("source="); sb.append(source);
+    	sb.append(",target="); sb.append(target);
+    	sb.append(",sender="); sb.append(sender);
+    	sb.append(",message="); sb.append(message);
+    	sb.append(",srcChannel="); sb.append(srcChannel);
+    	sb.append(",trgChannel="); sb.append(trgChannel);
+    	sb.append(",srcChannelTag="); sb.append(srcChannelTag);
+    	    	
+    	sb.append("}");
+    	return sb.toString();
     }
 }

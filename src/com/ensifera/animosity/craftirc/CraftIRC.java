@@ -57,6 +57,7 @@ public class CraftIRC extends JavaPlugin {
     private boolean debug;
     private Timer holdTimer = new Timer();
     protected HashMap<HoldType, Boolean> hold;
+    private Debug debugger;
 
     //Bots and channels config storage
     private ArrayList<ConfigurationNode> bots = new ArrayList<ConfigurationNode>();
@@ -66,14 +67,31 @@ public class CraftIRC extends JavaPlugin {
     protected HashMap<DualKey, String> chanTagMap;
     protected Chat vault;
     private Configuration configuration;
+    private static CraftIRC instance;
 
+    public Debug getDebugger() {
+    	if( debugger == null )
+    		return Debug.getInstance();
+    	return debugger;
+    }
+    
+    static public CraftIRC getInstance() {
+    	return instance;
+    }
+    
     public void onEnable() {
+    	instance = this;
         try {
             configuration = new Configuration(new File(getDataFolder().getPath() + "/config.yml"));
             configuration.load();
             PluginDescriptionFile desc = this.getDescription();
             VERSION = desc.getVersion();
             server = this.getServer();
+            
+            Debug.getInstance().init(log, "[CraftIRC]", "plugins/CraftIRC/debug.log", false);
+            debugger = Debug.getInstance();
+            debugger.setDebug(cDebug());
+            debugger.debug("onEnable(): DEBUG ENABLED"); 
            
             Field cfield = CraftServer.class.getDeclaredField("console");
             cfield.setAccessible(true);
@@ -175,6 +193,7 @@ public class CraftIRC extends JavaPlugin {
         } catch(Exception e) {
             e.printStackTrace();
         }
+        instance=null;
     }
 
     public boolean onCommand(CommandSender sender, Command command, String commandLabel, String[] args) {
@@ -366,6 +385,7 @@ public class CraftIRC extends JavaPlugin {
 
     protected void sendMessage(RelayedMessage msg, String tag, String event) {
         try {
+        	getDebugger().debug("sendMessage: tag=",tag," event=",event," message=",msg);
             String realEvent = event;
             //Send to IRC
             if (msg.getTarget() == EndPoint.IRC || msg.getTarget() == EndPoint.BOTH) {
@@ -381,9 +401,11 @@ public class CraftIRC extends JavaPlugin {
                         // Don't echo back to sending channel
                         if (msg.getSource() == EndPoint.IRC && msg.srcBot == i && msg.srcChannel.equalsIgnoreCase(chan))
                             continue;
+                    	getDebugger().debug("sendMessage: checking cChanCheckTag and cEvents");
                         // Send to all bots, channels with event enabled
                         if ((tag == null || cChanCheckTag(tag, i, chan))
                                 && (event == null || cEvents(realEvent, i, chan))) {
+                        	getDebugger().debug("sendMessage: passed checks, sending message");
                             msg.trgBot = i;
                             msg.trgChannel = chan;
                             if (msg.getTarget() == EndPoint.BOTH)
@@ -443,7 +465,8 @@ public class CraftIRC extends JavaPlugin {
      *            (String) - The IRC target tag to receive the message
      */
     public void sendMessageToTag(String message, String tag) {
-        RelayedMessage rm = newMsg(EndPoint.PLUGIN, EndPoint.IRC);
+    	getDebugger().debug("sendMessageToTag: tag=",tag," message=",message);
+        RelayedMessage rm = newMsg(EndPoint.GAME, EndPoint.IRC);
         rm.message = message;
         this.sendMessage(rm, tag, "custom");
     }
@@ -541,30 +564,60 @@ public class CraftIRC extends JavaPlugin {
     }
 
     protected String cFormatting(String eventType, int bot, String channel) {
+    	debugger.debug("cFormatting enter: eventType=",eventType,", bot=",bot," channel=",channel);
+    	
         eventType = (eventType.equals("game-to-irc.all-chat") ? "formatting.chat" : eventType);
         ConfigurationNode source = getChanNode(bot, channel);
         String result;
-        if (source == null || source.getString("formatting." + eventType) == null)
+        if (source == null || source.getString("formatting." + eventType) == null) {
+        	debugger.debug("cFormatting source if block");
             source = bots.get(bot);
-        if (source == null || source.getString("formatting." + eventType) == null)
+        }
+        if (source == null || source.getString("formatting." + eventType) == null) {
+        	debugger.debug("cFormatting result-if block");
             result = configuration.getString("settings.formatting." + eventType, null);
-        else
+        }
+        else {
+        	debugger.debug("cFormatting result-else block");
             result = source.getString("formatting." + eventType, null);
+        }
+        
+        // some bug where formatting is never set. set a default. -morganm 3/10/11
+        if( result == null ) {
+        	debugger.debug("cFormatting null result check");
+        	result = "%message%";
+        }
+        
+    	debugger.debug("cFormatting exit: eventType=",eventType,", source=",source,", result=",result);
         return result;
     }
 
     protected boolean cEvents(String eventType, int bot, String channel) {
+    	debugger.debug("cEvents: eventType=",eventType,", bot=",bot,", channel=",channel);
         ConfigurationNode source = null;
         boolean def = eventType.equalsIgnoreCase("game-to-irc.all-chat")
                 || eventType.equalsIgnoreCase("irc-to-game.all-chat");
-        if (channel != null)
+        if (channel != null) {
             source = getChanNode(bot, channel);
-        if ((source == null || source.getProperty("events." + eventType) == null) && bot > -1)
+        	debugger.debug("cEvents: (channel != null) source =",source);
+        }
+        if ((source == null || source.getProperty("events." + eventType) == null) && bot > -1) {
             source = bots.get(bot);
-        if (source == null || source.getProperty("events." + eventType) == null)
-            return configuration.getBoolean("settings.events." + eventType, def);
-        else
-            return source.getBoolean("events." + eventType, false);
+            debugger.debug("cEvents: (second if check) source =",source);
+        }
+        
+        boolean ret = false;
+        if (source == null || source.getProperty("events." + eventType) == null) {
+        	debugger.debug("cEvents: (if-block) checking settings.events.",eventType);
+            ret = configuration.getBoolean("settings.events." + eventType, def);
+        }
+        else {
+        	debugger.debug("cEvents: (else-block) checking source.getBoolean(events.",eventType,")");
+            ret = source.getBoolean("events." + eventType, false);
+        }
+        
+        debugger.debug("cEvents: source=",source,", return=",ret);
+    	return ret;
     }
 
     protected int cColorIrcFromGame(String game) {
@@ -720,15 +773,17 @@ public class CraftIRC extends JavaPlugin {
 
     // Check to see if channel tag exists on a bot
     protected boolean cChanCheckTag(String tag, int bot, String channel) {
+    	boolean ret = false;
         if (tag == null || tag.equals(""))
-            return false;
-        if (configuration.getString("settings.tag", "all").equalsIgnoreCase(tag))
-            return true;
-        if (bots.get(bot).getString("tag", "").equalsIgnoreCase(tag))
-            return true;
-        if (getChanNode(bot, channel).getString("tag", "").equalsIgnoreCase(tag))
-            return true;
-        return false;
+            ret=false;
+        else if (configuration.getString("settings.tag", "all").equalsIgnoreCase(tag))
+            ret=true;
+        else if (bots.get(bot).getString("tag", "").equalsIgnoreCase(tag))
+            ret=true;
+        else if (getChanNode(bot, channel).getString("tag", "").equalsIgnoreCase(tag))
+            ret=true;
+    	getDebugger().debug("cChanCheckTag: tag=",tag," bot=",bot,", channel=",channel,", ret=",ret);
+        return ret;
     }
 
     protected enum HoldType {
@@ -774,7 +829,10 @@ public class CraftIRC extends JavaPlugin {
             
             }
         }
-        return colorizeName(result.replaceAll("&([0-9a-f])", "§$1"));
+        if( result != null )
+        	return colorizeName(result.replaceAll("&([0-9a-f])", "§$1"));
+        else
+        	return "";
     }
 
     protected String getPermSuffix(String world, String pl) {
@@ -786,7 +844,10 @@ public class CraftIRC extends JavaPlugin {
             
             }
         }
-        return colorizeName(result.replaceAll("&([0-9a-f])", "§$1"));
+        if( result != null )
+        	return colorizeName(result.replaceAll("&([0-9a-f])", "§$1"));
+        else
+        	return "";
     }
    
     protected void enqueueConsoleCommand(String cmd) {

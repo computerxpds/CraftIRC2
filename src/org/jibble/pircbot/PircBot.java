@@ -43,6 +43,9 @@ import java.util.regex.Pattern;
 
 import javax.net.SocketFactory;
 
+import com.ensifera.animosity.craftirc.CraftIRC;
+import com.ensifera.animosity.craftirc.Debug;
+
 /**
  * PircBot is a Java framework for writing IRC bots quickly and easily.
  * <p>
@@ -571,6 +574,7 @@ public abstract class PircBot implements ReplyConstants, PircBotLogger {
      * @see Colors
      */
     public final void sendMessage(String target, String message) {
+    	CraftIRC.getInstance().getDebugger().debug("PircBot.sendMessage: target=",target,", message=",message);
         _outQueue.add("PRIVMSG " + target + " :" + message);
     }
 
