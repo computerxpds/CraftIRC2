@@ -17,7 +17,7 @@ import org.bukkit.plugin.Plugin;
  * @author Animosity
  *
  */
-public class IRCConsoleCommandSender extends CraftConsoleCommandSender {
+public class IRCConsoleCommandSender extends org.bukkit.craftbukkit.v1_5_R1.command.CraftConsoleCommandSender {
     private Boolean op = false;
     private RelayedMessage ircConCmd = null;
     

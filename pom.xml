@@ -46,11 +46,9 @@
       <version>1.5-R0.1-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <groupId>net.milkbowl.vault</groupId>
-      <artifactId>Vault</artifactId>
-      <version>1.2.15</version>
-      <type>jar</type>
-      <scope>compile</scope>
+      <groupId>net.milkbowl</groupId>
+      <artifactId>vault</artifactId>
+      <version>1.2.25-SNAPSHOT</version>
     </dependency>
   </dependencies>
   

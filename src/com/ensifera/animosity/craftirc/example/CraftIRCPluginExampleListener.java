@@ -37,6 +37,8 @@ public class CraftIRCPluginExampleListener implements Listener {
                             ircEvent.msgData.srcChannelTag);
                     ircEvent.setHandled(true);
                 }
+			default:
+				break;
             }
         }
     }
