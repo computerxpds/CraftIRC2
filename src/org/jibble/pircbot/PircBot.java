@@ -82,6 +82,7 @@ import com.ensifera.animosity.craftirc.Debug;
  * @author PircBot-PPF project
  * @version 1.0.0
  */
+@SuppressWarnings("unused")
 public abstract class PircBot implements ReplyConstants, PircBotLogger {
 
     /**
@@ -241,7 +242,8 @@ public abstract class PircBot implements ReplyConstants, PircBotLogger {
         this.removeAllChannels();
         
         InetSocketAddress ircServer = new InetSocketAddress(InetAddress.getByName(hostname), port);
-        Socket socket = new Socket();
+        @SuppressWarnings("resource")
+		Socket socket = new Socket();
         
         // Connect to the server.
         if (socketFactory == null) {

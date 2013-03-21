@@ -586,6 +586,8 @@ public class Minebot extends PircBot implements Runnable {
                 }
 
                 break;
+			default:
+				break;
             } //end switch
 
         } catch (Exception e) {

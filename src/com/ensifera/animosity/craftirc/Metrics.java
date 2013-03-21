@@ -115,7 +115,8 @@ public class Metrics {
      * the initial data to the metrics backend, and then after that it will post in increments of
      * PING_INTERVAL * 1200 ticks.
      */
-    public void start() {
+    @SuppressWarnings("deprecation")
+	public void start() {
         // Did we opt out?
         if (this.configuration.getBoolean("opt-out", false)) {
             return;
